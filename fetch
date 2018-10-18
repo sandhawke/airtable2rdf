@@ -1,0 +1,34 @@
+#!/usr/bin/env node   
+//  -*-mode: js2-mode -*- 
+
+/*
+
+./fetch -r https://airtable.com/appt0RIYRgR0UbMJM/api/docs Projects
+./fetch https://airtable.com/appt0RIYRgR0UbMJM/api/docs Projects
+./fetch https://airtable.com/appt0RIYRgR0UbMJM/api/docs 
+
+ */
+
+
+const opts = { boolean: 'r' }
+const argv = require('minimist')(process.argv.slice(2), opts);
+const fetch = require('./fetch-base')
+
+let id = argv._[0]
+if (!id) {
+  console.error('airtable base id required')
+  process.exit(1)
+}
+
+let tablename = argv._[1]
+
+fetch(id, tablename).then(data => {
+  if (argv.r) {
+    if (tablename) {
+      data = data._rows
+    } else {
+      // dunno how to do this.
+    }
+  }
+  process.stdout.write(JSON.stringify(data, null, 2))
+})
