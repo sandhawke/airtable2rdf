@@ -3,7 +3,7 @@ const { DataFactory } = N3;
 const { namedNode, blankNode, literal, defaultGraph, quad } = DataFactory;
 const cnamify = require('./cnamify')
 
-function rdfize(tables, store) {
+function rdfize(tables, cb) {
   const byId = {}
 
   const ns = 'https://example.org#'
@@ -12,9 +12,18 @@ function rdfize(tables, store) {
     const table = tables[name]
     for (const row of table._rows) {
       byId[row._id] = row
-      // which ns?
+
       // use _id or Name?   Maybe use 'id' if there is one?  or :id
-      row._namedNode = namedNode(ns + row._id)
+      let suff = row._id
+      if (row.Name) {
+        const m = row.Name.match(/((\w*):(\w+))/)
+        if (m) {
+          suff = m[3]  //   or use namespace prefix?
+        } else {
+          suff = cnamify(row.Name)
+        }
+      }
+      row._namedNode = namedNode(ns + suff)
     }
   }
 
@@ -39,10 +48,11 @@ function rdfize(tables, store) {
           o = literal(value)
         }
 
-        console.log(row._id, cnamify(key), JSON.stringify(value))
+        // console.log(row._id, cnamify(key), JSON.stringify(value))
         const q = quad(s, p, o)
-        console.log(q)
-        console.log()
+        cb(q)
+        // console.log(q)
+        // console.log()
       }
     }
   }
@@ -50,5 +60,7 @@ function rdfize(tables, store) {
 
 module.exports = rdfize
 
+/*
 const data = require('./data')
 rdfize(data)
+*/

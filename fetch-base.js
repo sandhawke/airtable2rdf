@@ -1,3 +1,8 @@
+/*
+  After I wrote this, I noticed airtable-fetch in NPM.   I could rip out
+  most of this and use that instead.   But this seem so be working okay.
+*/
+
 const memoize = require('promise-memoize')
 const Airtable = require('airtable')
 const debug = require('debug')('fetch-base')
@@ -15,14 +20,18 @@ module.exports = fetch
 // on https://airtable.com/api
 // so we accept the URL form as well
 const re = new RegExp('^(https://airtable.com/)?app(.*?)(/api/docs.*)?$')
-
-function fetch(idMaybe, tablename) {
+function baseId(idMaybe) {
   const m = idMaybe.match(re)
   if (!m) {
     console.error('airtable ID looks bad', idMaybe)
     throw Error('airtable ID looks bad: ' + idMaybe)
   }
   const id = 'app' + m[2]
+  return id
+}
+
+function fetch(idMaybe, tablename) {
+  const id = baseId(idMaybe)
   const base = Airtable.base(id)
   
   if (tablename) {
@@ -50,7 +59,7 @@ async function baseDumpReal(base, id) {
   const tableNamesRow = tables.about.tables
   if (tableNamesRow) {
     // debug('tablesNames is', tableNamesRow)
-    tables._names = tableNamesRow.Value.split('\n')
+    tables._names = tableNamesRow.Value.split(/[,\n]/)
     
     for (const name of tables._names) {
       const data = await tableDumpReal(base, name, id)
